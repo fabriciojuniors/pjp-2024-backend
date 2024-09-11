@@ -4,6 +4,8 @@ import com.senac.mini_banco.model.Cliente;
 import com.senac.mini_banco.repositories.ClienteRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,8 +23,10 @@ public class ClienteController {
     }
 
     @GetMapping
-    public List<Cliente> findAll() {
-        return clienteRepository.findAll();
+    public Page<Cliente> findAll(@RequestParam(name = "numeroPagina", required = false, defaultValue = "0") int numeroPagina,
+                                 @RequestParam(name = "quantidade", required = false, defaultValue = "5") int quantidade) {
+        PageRequest pageRequest = PageRequest.of(numeroPagina, quantidade);
+        return clienteRepository.findAll(pageRequest);
     }
 
     @GetMapping("{id}")
