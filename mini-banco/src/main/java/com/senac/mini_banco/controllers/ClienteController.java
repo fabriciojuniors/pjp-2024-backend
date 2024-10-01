@@ -1,5 +1,7 @@
 package com.senac.mini_banco.controllers;
 
+import com.senac.mini_banco.dtos.ClienteRequestDto;
+import com.senac.mini_banco.dtos.ClienteResponseDto;
 import com.senac.mini_banco.model.Cliente;
 import com.senac.mini_banco.repositories.ClienteRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -26,10 +28,13 @@ public class ClienteController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Cliente>> findAll(@RequestParam(name = "numeroPagina", required = false, defaultValue = "0") int numeroPagina,
-                                                @RequestParam(name = "quantidade", required = false, defaultValue = "5") int quantidade) {
+    public ResponseEntity<Page<ClienteResponseDto>> findAll(@RequestParam(name = "numeroPagina", required = false, defaultValue = "0") int numeroPagina,
+                                                            @RequestParam(name = "quantidade", required = false, defaultValue = "5") int quantidade) {
         PageRequest pageRequest = PageRequest.of(numeroPagina, quantidade);
-        return ResponseEntity.ok(clienteRepository.findAll(pageRequest));
+        return ResponseEntity.ok(clienteRepository.findAll(pageRequest)
+                .map(cliente -> new ClienteResponseDto(cliente.getId(),
+                        cliente.getNome(),
+                        cliente.getEmail())));
     }
 
     @GetMapping("{id}")
@@ -44,12 +49,22 @@ public class ClienteController {
     }
 
     @PostMapping
-    public ResponseEntity<Cliente> save(@RequestBody Cliente cliente) {
+    public ResponseEntity<ClienteResponseDto> save(@RequestBody ClienteRequestDto dto) {
+        Cliente cliente = new Cliente();
+        cliente.setNome(dto.nome());
+        cliente.setEmail(dto.email());
+        cliente.setContatoAdicional(dto.contatoAdicional());
+        cliente.setLimiteCredito(dto.limiteCredito());
+        cliente.setProfissao(dto.profissao());
+        cliente.setTelefoneContato(dto.telefoneContato());
+        cliente.setDataNascimento(dto.dataNascimento());
         clienteRepository.save(cliente);
-        //return ResponseEntity.status(201).body(cliente);
+
         return ResponseEntity
                 .created(URI.create("/clientes/" + cliente.getId()))
-                .body(cliente);
+                .body(new ClienteResponseDto(cliente.getId(),
+                        cliente.getNome(),
+                        cliente.getEmail()));
     }
 
     @PutMapping("{id}")
