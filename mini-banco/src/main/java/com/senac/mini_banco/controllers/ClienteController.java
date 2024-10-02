@@ -32,17 +32,15 @@ public class ClienteController {
                                                             @RequestParam(name = "quantidade", required = false, defaultValue = "5") int quantidade) {
         PageRequest pageRequest = PageRequest.of(numeroPagina, quantidade);
         return ResponseEntity.ok(clienteRepository.findAll(pageRequest)
-                .map(cliente -> new ClienteResponseDto(cliente.getId(),
-                        cliente.getNome(),
-                        cliente.getEmail())));
+                .map(cliente -> ClienteResponseDto.toDto(cliente)));
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<Cliente> findById(@PathVariable("id") Integer id) {
+    public ResponseEntity<ClienteResponseDto> findById(@PathVariable("id") Integer id) {
         Optional<Cliente> cliente = clienteRepository.findById(id);
 
         if (cliente.isPresent()) {
-            return ResponseEntity.ok(cliente.get());
+            return ResponseEntity.ok(ClienteResponseDto.toDto(cliente.get()));
         } else {
             throw new EntityNotFoundException("Cliente não encontrado.");
         }
@@ -50,33 +48,21 @@ public class ClienteController {
 
     @PostMapping
     public ResponseEntity<ClienteResponseDto> save(@RequestBody ClienteRequestDto dto) {
-        Cliente cliente = new Cliente();
-        cliente.setNome(dto.nome());
-        cliente.setEmail(dto.email());
-        cliente.setContatoAdicional(dto.contatoAdicional());
-        cliente.setLimiteCredito(dto.limiteCredito());
-        cliente.setProfissao(dto.profissao());
-        cliente.setTelefoneContato(dto.telefoneContato());
-        cliente.setDataNascimento(dto.dataNascimento());
+        Cliente cliente = dto.toCliente(new Cliente());
         clienteRepository.save(cliente);
-
         return ResponseEntity
                 .created(URI.create("/clientes/" + cliente.getId()))
-                .body(new ClienteResponseDto(cliente.getId(),
-                        cliente.getNome(),
-                        cliente.getEmail()));
+                .body(ClienteResponseDto.toDto(cliente));
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<Cliente> update(@PathVariable("id") Integer id, @RequestBody Cliente clienteRequisicao) {
+    public ResponseEntity<ClienteResponseDto> update(@PathVariable("id") Integer id, @RequestBody ClienteRequestDto dto) {
         Optional<Cliente> clienteOpt = clienteRepository.findById(id);
 
         if (clienteOpt.isPresent()) {
-            Cliente clienteSalvo = clienteOpt.get();
-            clienteSalvo.setNome(clienteRequisicao.getNome());
-
+            Cliente clienteSalvo = dto.toCliente(clienteOpt.get());
             return ResponseEntity
-                    .ok(clienteRepository.save(clienteSalvo));
+                    .ok(ClienteResponseDto.toDto(clienteRepository.save(clienteSalvo)));
         } else {
             throw new EntityNotFoundException("Cliente não encontrado.");
         }
