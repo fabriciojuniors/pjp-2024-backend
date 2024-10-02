@@ -1,5 +1,7 @@
 package com.senac.mini_banco.controllers;
 
+import com.senac.mini_banco.dtos.ClienteResponseDto;
+import com.senac.mini_banco.dtos.ContaBancariaResponseDto;
 import com.senac.mini_banco.model.Banco;
 import com.senac.mini_banco.model.ContaBancaria;
 import com.senac.mini_banco.repositories.ContaBancariaRepository;
@@ -24,34 +26,35 @@ public class ContaBancariaController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<ContaBancaria>> findAll(@RequestParam (name = "numeroPagina", required = false, defaultValue = "0") int numeroPagina,
+    public ResponseEntity<Page<ContaBancariaResponseDto>> findAll(@RequestParam (name = "numeroPagina", required = false, defaultValue = "0") int numeroPagina,
                                                       @RequestParam(name = "quantidade", required = false, defaultValue = "5") int quantidade) {
         PageRequest pageRequest = PageRequest.of(numeroPagina, quantidade);
-        return ResponseEntity.ok(contaBancariaRepository.findAll(pageRequest));
+        return ResponseEntity.ok(contaBancariaRepository.findAll(pageRequest)
+                .map(contaBancaria -> ContaBancariaResponseDto.toDto(contaBancaria)));
     }
 
     @GetMapping("{id}")
-    public ResponseEntity<ContaBancaria> findById(@PathVariable("id") Integer id) {
+    public ResponseEntity<ContaBancariaResponseDto> findById(@PathVariable("id") Integer id) {
         Optional<ContaBancaria> contaBancariaOpt = contaBancariaRepository.findById(id);
 
         if (!contaBancariaOpt.isPresent()) {
             throw new EntityNotFoundException("Conta bancária não encontrada");
         }
 
-        return ResponseEntity.ok(contaBancariaOpt.get());
+        return ResponseEntity.ok(ContaBancariaResponseDto.toDto(contaBancariaOpt.get()));
     }
 
     @PostMapping
-    public ResponseEntity<ContaBancaria> save(@RequestBody ContaBancaria contaBancaria) {
+    public ResponseEntity<ContaBancariaResponseDto> save(@RequestBody ContaBancaria contaBancaria) {
         contaBancariaRepository.save(contaBancaria);
         return ResponseEntity
                 .created(URI.create("/contas-bancarias/" + contaBancaria.getId()))
 //                .status(201)
-                .body(contaBancaria);
+                .body(ContaBancariaResponseDto.toDto(contaBancaria));
     }
 
     @PutMapping("{id}")
-    public ResponseEntity<ContaBancaria> update(@PathVariable("id") Integer id,
+    public ResponseEntity<ContaBancariaResponseDto> update(@PathVariable("id") Integer id,
                                 @RequestBody ContaBancaria contaBancaria) {
         Optional<ContaBancaria> contaBancariaOpt = contaBancariaRepository.findById(id);
 
@@ -66,7 +69,7 @@ public class ContaBancariaController {
         contaBancariaSalva.setNumeroAgencia(contaBancaria.getDigitoAgencia());
         contaBancariaSalva.setDigitoAgencia(contaBancaria.getDigitoAgencia());
 
-        return ResponseEntity.ok(contaBancariaRepository.save(contaBancariaSalva));
+        return ResponseEntity.ok(ContaBancariaResponseDto.toDto(contaBancariaRepository.save(contaBancariaSalva)));
     }
 
     @DeleteMapping("{id}")
