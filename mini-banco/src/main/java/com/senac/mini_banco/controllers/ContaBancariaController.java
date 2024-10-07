@@ -1,9 +1,10 @@
 package com.senac.mini_banco.controllers;
 
-import com.senac.mini_banco.dtos.ClienteResponseDto;
+import com.senac.mini_banco.dtos.ContaBancariaRequestDto;
 import com.senac.mini_banco.dtos.ContaBancariaResponseDto;
 import com.senac.mini_banco.model.Banco;
 import com.senac.mini_banco.model.ContaBancaria;
+import com.senac.mini_banco.repositories.ClienteRepository;
 import com.senac.mini_banco.repositories.ContaBancariaRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
@@ -20,9 +21,11 @@ import java.util.Optional;
 public class ContaBancariaController {
 
     private final ContaBancariaRepository contaBancariaRepository;
+    private final ClienteRepository clienteRepository;
 
-    public ContaBancariaController(ContaBancariaRepository contaBancariaRepository) {
+    public ContaBancariaController(ContaBancariaRepository contaBancariaRepository, ClienteRepository clienteRepository) {
         this.contaBancariaRepository = contaBancariaRepository;
+        this.clienteRepository = clienteRepository;
     }
 
     @GetMapping
@@ -45,7 +48,9 @@ public class ContaBancariaController {
     }
 
     @PostMapping
-    public ResponseEntity<ContaBancariaResponseDto> save(@RequestBody ContaBancaria contaBancaria) {
+    public ResponseEntity<ContaBancariaResponseDto> save(@RequestBody ContaBancariaRequestDto dto) {
+        ContaBancaria contaBancaria = dto.toContaBancaria(new ContaBancaria(),
+                clienteRepository);
         contaBancariaRepository.save(contaBancaria);
         return ResponseEntity
                 .created(URI.create("/contas-bancarias/" + contaBancaria.getId()))
@@ -55,19 +60,15 @@ public class ContaBancariaController {
 
     @PutMapping("{id}")
     public ResponseEntity<ContaBancariaResponseDto> update(@PathVariable("id") Integer id,
-                                @RequestBody ContaBancaria contaBancaria) {
+                                @RequestBody ContaBancariaRequestDto dto) {
         Optional<ContaBancaria> contaBancariaOpt = contaBancariaRepository.findById(id);
 
         if (!contaBancariaOpt.isPresent()) {
             throw new EntityNotFoundException("Conta não encontrada");
         }
 
-        ContaBancaria contaBancariaSalva = contaBancariaOpt.get();
-        contaBancariaSalva.setBanco(contaBancaria.getBanco());
-        contaBancariaSalva.setNumeroConta(contaBancaria.getNumeroConta());
-        contaBancariaSalva.setDigitoConta(contaBancaria.getDigitoConta());
-        contaBancariaSalva.setNumeroAgencia(contaBancaria.getDigitoAgencia());
-        contaBancariaSalva.setDigitoAgencia(contaBancaria.getDigitoAgencia());
+        ContaBancaria contaBancariaSalva = dto.toContaBancaria(
+                contaBancariaOpt.get(), clienteRepository);
 
         return ResponseEntity.ok(ContaBancariaResponseDto.toDto(contaBancariaRepository.save(contaBancariaSalva)));
     }
