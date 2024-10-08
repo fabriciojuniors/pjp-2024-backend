@@ -2,6 +2,7 @@ package com.senac.mini_banco.controllers;
 
 import com.senac.mini_banco.dtos.ContaBancariaRequestDto;
 import com.senac.mini_banco.dtos.ContaBancariaResponseDto;
+import com.senac.mini_banco.exceptions.RegraNegocioException;
 import com.senac.mini_banco.model.Banco;
 import com.senac.mini_banco.model.ContaBancaria;
 import com.senac.mini_banco.repositories.ClienteRepository;
@@ -82,7 +83,7 @@ public class ContaBancariaController {
           ContaBancaria contaBancaria = contaBancariaOpt.get();
 
           if (contaBancaria.getBanco() == Banco.BANCO_DO_BRASIL) {
-                throw new RuntimeException("A conta não pode ser excluída");
+                throw new RegraNegocioException("A conta não pode ser excluída", 1);
           } else {
               contaBancariaRepository.delete(contaBancaria);
           }
