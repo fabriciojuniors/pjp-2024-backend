@@ -117,4 +117,8 @@ public class Cliente {
     public void setLimiteCredito(double limiteCredito) {
         this.limiteCredito = limiteCredito;
     }
+
+    public Collection<ContaBancaria> getContas() {
+        return contas;
+    }
 }
